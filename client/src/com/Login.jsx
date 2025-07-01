@@ -7,7 +7,7 @@ function Login() {
     email: '',
     password: ''
   });
-
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -21,22 +21,34 @@ function Login() {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const { email, password } = formData;
+
+    // ✅ Basic front-end validation
+    if (!email || !password) {
+      setError('Please fill in both email and password.');
+      return;
+    }
+
     try {
       const res = await axios.post('http://localhost:5000/alldata', formData);
+
       alert(res.data.message);
 
-      // ✅ Check both email and password
-      if (formData.email === "ashwin@gmail.com" && formData.password === "123456") {
+      // ✅ Simple hardcoded admin check (ideally, server should handle this)
+      if (email === 'ashwin@gmail.com' && password === '123456') {
         navigate('/admin');
       } else {
         navigate('/pro');
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Login failed');
+      console.error('Login error:', err.response?.data || err.message);
+      setError(err.response?.data?.message || 'Login failed. Please try again.');
     }
   };
 
@@ -102,13 +114,22 @@ function Login() {
     registerButton: {
       backgroundColor: '#007bff',
       color: '#fff',
-    }
+    },
+    errorText: {
+      color: '#dc3545',
+      fontSize: '14px',
+      marginBottom: '10px',
+      textAlign: 'center',
+    },
   };
 
   return (
     <div style={styles.container}>
       <div style={styles.formBox}>
         <h2 style={styles.heading}>Login</h2>
+
+        {error && <p style={styles.errorText}>{error}</p>}
+
         <form onSubmit={handleSubmit}>
           <input
             name="email"
@@ -128,8 +149,12 @@ function Login() {
           <button type="submit" style={{ ...styles.button, ...styles.loginButton }}>Login</button>
         </form>
 
-        <button onClick={handleGoToGuest} style={{ ...styles.button, ...styles.guestButton }}>Continue as Guest</button>
-        <button onClick={handleGoToRegister} style={{ ...styles.button, ...styles.registerButton }}>Go to Register</button>
+        <button onClick={handleGoToGuest} style={{ ...styles.button, ...styles.guestButton }}>
+          Continue as Guest
+        </button>
+        <button onClick={handleGoToRegister} style={{ ...styles.button, ...styles.registerButton }}>
+          Go to Register
+        </button>
       </div>
     </div>
   );

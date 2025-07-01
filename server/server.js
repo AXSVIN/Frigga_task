@@ -24,7 +24,7 @@ mongoose.connect('mongodb://localhost:27017/company1', {
 .then(() => console.log('✅ MongoDB Connected'))
 .catch(err => console.error('❌ MongoDB connection error:', err));
 
-// ✅ User Schema and Model
+// ✅ Mongoose User Model
 const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     phone: { type: String, required: true },
@@ -32,7 +32,7 @@ const userSchema = new mongoose.Schema({
 });
 const User = mongoose.model('User', userSchema);
 
-// ✅ User Routes
+// ✅ Routes - User CRUD
 
 // Get all users
 app.get('/alldata', async (req, res) => {
@@ -44,23 +44,76 @@ app.get('/alldata', async (req, res) => {
     }
 });
 
-// Create new user
-app.post('/alldata', async (req, res) => {
-    const { email, phone, password } = req.body;
+// Register user
+app.post('/hp', async (req, res) => {
+    const { email, phone, password, confirmPassword } = req.body;
+
+    if (!email || !phone || !password || !confirmPassword) {
+        return res.status(400).json({ message: 'Please fill all fields' });
+    }
+
+    if (password !== confirmPassword) {
+        return res.status(400).json({ message: 'Passwords do not match' });
+    }
+
     try {
         const existingUser = await User.findOne({ email });
-        if (existingUser) return res.status(400).json({ message: 'User already exists' });
+        if (existingUser) {
+            return res.status(400).json({ message: 'User already exists' });
+        }
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        const newUser = new User({ email, phone, password: hashedPassword });
+        const newUser = new User({
+            email,
+            phone,
+            password: hashedPassword
+        });
+
         await newUser.save();
-        res.status(201).json(newUser);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(201).json({ message: 'User registered successfully' });
+
+    } catch (error) {
+        console.error('Registration Error:', error);
+        res.status(500).json({ message: 'Server error. Please try again later.' });
     }
 });
+
+app.post('/ph', async (req, res) => {
+    const { email, phone, password } = req.body;
+
+    if (!email || !phone || !password) {
+        return res.status(400).json({ message: 'Please fill all fields' });
+    }
+
+    try {
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ message: 'User already exists' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        const newUser = new User({
+            email,
+            phone,
+            password: hashedPassword
+        });
+
+        await newUser.save();
+        res.status(201).json({ message: 'User added successfully' });
+
+    } catch (error) {
+        console.error('Error adding user:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+
+
+
 
 // Update user
 app.put('/alldata/:id', async (req, res) => {
@@ -89,32 +142,6 @@ app.delete('/alldata/:id', async (req, res) => {
     }
 });
 
-// User Registration
-app.post('/alldata/register', async (req, res) => {
-    const { email, phone, password, confirmPassword } = req.body;
-    if (!email || !phone || !password || !confirmPassword) {
-        return res.status(400).json({ message: 'Please fill all fields' });
-    }
-    if (password !== confirmPassword) {
-        return res.status(400).json({ message: 'Passwords do not match' });
-    }
-
-    try {
-        const existingUser = await User.findOne({ email });
-        if (existingUser) return res.status(400).json({ message: 'User already exists' });
-
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
-        const newUser = new User({ email, phone, password: hashedPassword });
-        await newUser.save();
-
-        res.status(201).json({ message: 'User registered successfully' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
 // User Login
 app.post('/alldata/login', async (req, res) => {
     const { email, password } = req.body;
@@ -134,12 +161,11 @@ app.post('/alldata/login', async (req, res) => {
             return res.status(401).json({ message: 'Invalid email or password' });
         }
 
-        // Special case for admin user
+        // Admin check (Not secure for production)
         if (email === 'ashwin@gmail.com' && password === '123456') {
             return res.status(200).json({ message: 'Login successful', role: 'admin' });
         }
 
-        // Regular user
         res.status(200).json({ message: 'Login successful', role: 'user' });
 
     } catch (err) {
@@ -147,8 +173,7 @@ app.post('/alldata/login', async (req, res) => {
     }
 });
 
-
-// ✅ Portfolio Logic
+// ✅ Portfolio Section
 const stockInputs = [
     { symbol: 'AAPL', qty: 3, purchase_price: 180 },
     { symbol: 'TCS.NS', qty: 2, purchase_price: 3700 },
@@ -228,16 +253,15 @@ async function updatePortfolio() {
     latestResults = results;
 }
 
-
 setInterval(updatePortfolio, 15000);
 updatePortfolio();
-
 
 app.get('/portfolio', (req, res) => {
     res.json(latestResults);
 });
 
-
+// ✅ Start server
 app.listen(PORT, () => {
     console.log(`✅ Server running at http://localhost:${PORT}`);
 });
+ 

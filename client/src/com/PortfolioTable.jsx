@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Github, Instagram, Linkedin, User } from 'lucide-react';
+import { Github, Instagram, Linkedin, User, LogOut } from 'lucide-react';
 
 
 
@@ -130,10 +130,15 @@ const PortfolioTable = () => {
               <Linkedin color="#d1d5db" size={24} />
             </div>
           </a>
-          <a href="dashborad" target="_blank" rel="noopener noreferrer">
+          <a href="dashborad" target="_blank" rel="noopener noreferrer"> 
             <div className="icon-button">
-    <User color="#d1d5db" size={24} />
-  </div>
+              <User color="#d1d5db" size={24} />
+            </div>
+          </a>
+           <a href="login" target="_blank" rel="noopener noreferrer">
+            <div className="icon-button">
+              <LogOut color="#d1d5db" size={24} />
+            </div>
           </a>
         </div>
 

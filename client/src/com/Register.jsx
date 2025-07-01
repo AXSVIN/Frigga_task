@@ -15,10 +15,8 @@ function Register() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Set body background to black when this component mounts
     document.body.style.backgroundColor = '#000';
     document.body.style.color = '#fff';
-
     return () => {
       document.body.style.backgroundColor = '';
       document.body.style.color = '';
@@ -26,51 +24,68 @@ function Register() {
   }, []);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    if (errors[e.target.name]) {
-      setErrors({ ...errors, [e.target.name]: '' });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+
+    if (errors[name]) {
+      setErrors({ ...errors, [name]: '' });
     }
+
     setMessage('');
   };
 
   const validateForm = () => {
-    let newErrors = {};
+    const newErrors = {};
+
     if (!formData.email) {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email address is invalid';
+      newErrors.email = 'Invalid email address';
     }
+
     if (!formData.phone) {
       newErrors.phone = 'Phone number is required';
     } else if (!/^\d{10}$/.test(formData.phone)) {
       newErrors.phone = 'Phone number must be 10 digits';
     }
+
     if (!formData.password) {
       newErrors.password = 'Password is required';
     } else if (formData.password.length < 6) {
       newErrors.password = 'Password must be at least 6 characters';
     }
+
     if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
     }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage('');
-    if (!validateForm()) {
-      return;
-    }
+
+    if (!validateForm()) return;
 
     try {
       const { email, phone, password, confirmPassword } = formData;
-      const res = await axios.post('http://localhost:5000/register', { email, phone, password, confirmPassword });
-      setMessage(res.data.message);
+
+      const res = await axios.post('http://localhost:5000/hp', {
+        email,
+        phone,
+        password,
+        confirmPassword
+      });
+
+      setMessage(res.data.message || 'Registration successful');
       navigate('/pro');
     } catch (err) {
-      setMessage(err.response?.data?.message || 'Registration failed. Please try again.');
+      console.error('Registration error:', err);
+      setMessage(
+        err.response?.data?.message ||
+        'Registration failed. Please try again.'
+      );
     }
   };
 
@@ -96,7 +111,6 @@ function Register() {
     registerHeading: {
       textAlign: 'center',
       marginBottom: '25px',
-      color: '#fff',
       fontSize: '28px',
       fontWeight: '600',
     },
@@ -119,7 +133,6 @@ function Register() {
       color: '#dc3545',
       fontSize: '14px',
       marginTop: '5px',
-      marginBottom: '0',
     },
     messageText: {
       textAlign: 'center',
@@ -127,12 +140,14 @@ function Register() {
       marginBottom: '15px',
       padding: '10px',
       borderRadius: '6px',
+      fontSize: '15px',
+    },
+    successMessage: {
       backgroundColor: '#155724',
       color: '#d4edda',
       border: '1px solid #c3e6cb',
-      fontSize: '15px',
     },
-    errorMessageText: {
+    errorMessage: {
       backgroundColor: '#721c24',
       color: '#f8d7da',
       border: '1px solid #f5c6cb',
@@ -188,7 +203,7 @@ function Register() {
         {message && (
           <p style={{
             ...styles.messageText,
-            ...(message.includes('failed') ? styles.errorMessageText : {})
+            ...(message.toLowerCase().includes('failed') ? styles.errorMessage : styles.successMessage)
           }}>
             {message}
           </p>
@@ -197,22 +212,30 @@ function Register() {
         <form onSubmit={handleSubmit}>
           <div style={styles.formGroup}>
             <input
+              type="text"
               name="email"
               placeholder="Email"
               value={formData.email}
               onChange={handleChange}
-              style={{ ...styles.formInput, ...(errors.email && styles.formInputError) }}
+              style={{
+                ...styles.formInput,
+                ...(errors.email && styles.formInputError)
+              }}
             />
             {errors.email && <p style={styles.errorText}>{errors.email}</p>}
           </div>
 
           <div style={styles.formGroup}>
             <input
+              type="text"
               name="phone"
               placeholder="Phone"
               value={formData.phone}
               onChange={handleChange}
-              style={{ ...styles.formInput, ...(errors.phone && styles.formInputError) }}
+              style={{
+                ...styles.formInput,
+                ...(errors.phone && styles.formInputError)
+              }}
             />
             {errors.phone && <p style={styles.errorText}>{errors.phone}</p>}
           </div>
@@ -224,7 +247,10 @@ function Register() {
               placeholder="Password"
               value={formData.password}
               onChange={handleChange}
-              style={{ ...styles.formInput, ...(errors.password && styles.formInputError) }}
+              style={{
+                ...styles.formInput,
+                ...(errors.password && styles.formInputError)
+              }}
             />
             {errors.password && <p style={styles.errorText}>{errors.password}</p>}
           </div>
@@ -236,7 +262,10 @@ function Register() {
               placeholder="Confirm Password"
               value={formData.confirmPassword}
               onChange={handleChange}
-              style={{ ...styles.formInput, ...(errors.confirmPassword && styles.formInputError) }}
+              style={{
+                ...styles.formInput,
+                ...(errors.confirmPassword && styles.formInputError)
+              }}
             />
             {errors.confirmPassword && <p style={styles.errorText}>{errors.confirmPassword}</p>}
           </div>
@@ -245,10 +274,16 @@ function Register() {
         </form>
 
         <div style={styles.navigationButtons}>
-          <button onClick={handleGoToLogin} style={{ ...styles.navButton, ...styles.loginButtonColor }}>
+          <button
+            onClick={handleGoToLogin}
+            style={{ ...styles.navButton, ...styles.loginButtonColor }}
+          >
             Go to Login
           </button>
-          <button onClick={handleGoToGuest} style={{ ...styles.navButton, ...styles.guestButtonColor }}>
+          <button
+            onClick={handleGoToGuest}
+            style={{ ...styles.navButton, ...styles.guestButtonColor }}
+          >
             Continue as Guest
           </button>
         </div>

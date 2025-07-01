@@ -6,6 +6,7 @@ function Dashboard() {
   const [users, setUsers] = useState([]);
   const [form, setForm] = useState({ email: '', phone: '', password: '' });
   const [editingId, setEditingId] = useState(null);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const API_URL = 'http://localhost:5000/alldata';
@@ -20,36 +21,36 @@ function Dashboard() {
       setUsers(res.data);
     } catch (error) {
       console.error('Error fetching users:', error);
+      setError('Failed to load users.');
     }
   };
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const portfolio = () => {
-    navigate('/pro');
+    setError('');
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      if (editingId) {
-        await axios.put(`${API_URL}/${editingId}`, form);
-        setEditingId(null);
-      } else {
-        await axios.post(API_URL, form);
-      }
-      setForm({ email: '', phone: '', password: '' });
-      fetchUsers();
-    } catch (error) {
-      console.error('Error saving user:', error);
+  e.preventDefault();
+  try {
+    if (editingId) {
+      await axios.put(`${API_URL}/${editingId}`, form);
+      setEditingId(null);
+    } else {
+      await axios.post('http://localhost:5000/ph', form);
     }
-  };
+    setForm({ email: '', phone: '', password: '' });
+    fetchUsers();
+  } catch (error) {
+    console.error('Error saving user:', error);
+    setError('Failed to save user.');
+  }
+};
 
   const handleEdit = (user) => {
     setForm({ email: user.email, phone: user.phone, password: user.password });
     setEditingId(user._id);
+    setError('');
   };
 
   const handleDelete = async (id) => {
@@ -58,7 +59,12 @@ function Dashboard() {
       fetchUsers();
     } catch (error) {
       console.error('Error deleting user:', error);
+      setError('Failed to delete user.');
     }
+  };
+
+  const handleGoToPortfolio = () => {
+    navigate('/pro');
   };
 
   const containerStyle = {
@@ -69,6 +75,7 @@ function Dashboard() {
   const formStyle = {
     marginBottom: '20px',
     display: 'flex',
+    flexWrap: 'wrap',
     gap: '10px',
   };
 
@@ -76,6 +83,7 @@ function Dashboard() {
     padding: '8px',
     borderRadius: '4px',
     border: '1px solid #ccc',
+    flex: '1 1 200px',
   };
 
   const buttonStyle = {
@@ -109,9 +117,16 @@ function Dashboard() {
     backgroundColor: '#dc3545',
   };
 
+  const errorStyle = {
+    color: 'red',
+    marginBottom: '10px',
+  };
+
   return (
     <div style={containerStyle}>
       <h2>User Dashboard</h2>
+
+      {error && <p style={errorStyle}>{error}</p>}
 
       <form onSubmit={handleSubmit} style={formStyle}>
         <input
@@ -144,10 +159,12 @@ function Dashboard() {
         <button type="submit" style={buttonStyle}>
           {editingId ? 'Update User' : 'Add User'}
         </button>
-        <button  style={buttonStyle} onClick={portfolio}  >
-          {editingId ? 'Portfolio' : 'Portfolio User'}
-        </button>
       </form>
+
+      {/* ✅ Portfolio button outside form to prevent accidental form submit */}
+      <button onClick={handleGoToPortfolio} style={buttonStyle}>
+        Go to Portfolio
+      </button>
 
       <table style={tableStyle}>
         <thead>
